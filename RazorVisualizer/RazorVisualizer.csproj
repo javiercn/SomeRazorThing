@@ -1,16 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <DefaultItemExcludes>$(DefaultItemExcludes);Razor/**/*</DefaultItemExcludes>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BuildBundlerMinifier" Version="2.8.391" />
-    <PackageReference Include="Microsoft.AspNetCore.App" />
-    <ProjectReference Include="./Razor/src/Microsoft.AspNetCore.Razor.Language/Microsoft.AspNetCore.Razor.Language.csproj" />
+	<PackageReference Include="BuildBundlerMinifier" Version="2.8.391" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	  <ProjectReference Include="../Razor/src/Microsoft.AspNetCore.Razor.Language/src/Microsoft.AspNetCore.Razor.Language.csproj" />
+	  <ProjectReference Include="..\Razor\src\Microsoft.AspNetCore.Mvc.Razor.Extensions\src\Microsoft.AspNetCore.Mvc.Razor.Extensions.csproj" />
+	  <ProjectReference Include="..\Razor\src\Microsoft.CodeAnalysis.Razor\src\Microsoft.CodeAnalysis.Razor.csproj" />
   </ItemGroup>
 
 </Project>

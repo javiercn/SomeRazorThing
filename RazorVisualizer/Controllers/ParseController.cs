@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.AspNetCore.Razor.Language.Legacy;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.IO;
+using System.Text.Unicode;
+using Microsoft.CodeAnalysis.Razor;
+using Microsoft.AspNetCore.Mvc.Razor.Extensions;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace RazorVisualizer
 {
@@ -23,9 +28,23 @@ namespace RazorVisualizer
                 }
             });
             var parser = new RazorParser(options);
-            var tree = parser.Parse(document, legacy: true);
+            var tree = parser.Parse(document);
             var result = TreeSerializer.Serialize(tree);
             return Content(result);
+        }
+
+        internal class ConfigureRazorCodeGenerationOptions : RazorEngineFeatureBase, IConfigureRazorCodeGenerationOptionsFeature
+        {
+            private readonly Action<RazorCodeGenerationOptionsBuilder> _action;
+
+            public ConfigureRazorCodeGenerationOptions(Action<RazorCodeGenerationOptionsBuilder> action)
+            {
+                _action = action;
+            }
+
+            public int Order { get; set; }
+
+            public void Configure(RazorCodeGenerationOptionsBuilder options) => _action(options);
         }
 
         [HttpPost("/[controller]/[action]")]
@@ -40,8 +59,27 @@ namespace RazorVisualizer
             });
 
             var sourceDocument = CreateSourceDocument(source.Content);
-            var engine = RazorProjectEngine.Create();
-            var codeDocument = engine.Process(sourceDocument, null, null);
+
+            var engine = RazorProjectEngine.Create(RazorConfiguration.Default, RazorProjectFileSystem.Empty, b =>
+            {
+                b.Features.Add(new DefaultTypeNameFeature());
+                b.SetRootNamespace("RazorVisualizer");
+
+                b.Features.Add(new ConfigureRazorCodeGenerationOptions(options =>
+                {
+                    options.SuppressMetadataSourceChecksumAttributes = true;
+                    options.SupportLocalizedComponentNames = false;
+                }));
+
+                b.Features.Add(new DefaultTagHelperDescriptorProvider());
+
+                CompilerFeatures.Register(b);
+                RazorExtensions.Register(b);
+
+                b.SetCSharpLanguageVersion(LanguageVersion.CSharp10);
+            });
+
+            var codeDocument = engine.Process(sourceDocument, FileKinds.Component, null, null);
 
             var irDocument = codeDocument.GetDocumentIntermediateNode();
             var output = SerializeIR(irDocument);

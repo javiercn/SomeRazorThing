@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Razor.Language.Legacy;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Razor.Language.Syntax;
 
 namespace RazorVisualizer
 {
@@ -10,19 +11,19 @@ namespace RazorVisualizer
         public static string Serialize(RazorSyntaxTree syntaxTree)
         {
             var rootNode = new Node();
-            Visit(syntaxTree.LegacyRoot, rootNode);
+            Visit(syntaxTree.Root, rootNode);
             var result = JsonConvert.SerializeObject(rootNode);
 
             return result;
         }
 
-        internal static void Visit(SyntaxTreeNode root, Node node)
+        internal static void Visit(SyntaxNode root, Node node)
         {
             node.Content = Normalize(root.ToString());
-            node.Start = root.Start.AbsoluteIndex;
-            node.Length = root.Length;
+            node.Start = root.Span.Start;
+            node.Length = root.Span.Length;
 
-            if (root is Block block)
+            if (root is RazorBlockSyntax block)
             {
                 foreach (var child in block.Children)
                 {
